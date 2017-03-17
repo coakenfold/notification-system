@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Index</title>
+	<style>
+	.events,
+	.subscriptions,
+	.signal {
+		float: left;
+		padding: 10px;
+	}</style>
+</head>
+<body>
+
+	<a href="/events">Events</a>
+	<a href="/subscriptions">Subscriptions</a>
+	<a href="/logout">Logout</a>
+	
+	<hr />
+
+	<h1>Home</h1>
+	
+	<p>Welcome <%= (user.displayName || '@' + user.userName) %>.</p>
+	<% if (user.accountType !== 'user') {%>
+	<p>
+	Account type: 
+	<% if (user.accountType === 'admin') {%>Admin<% } %>
+	<% if (user.accountType === 'creator') {%>Creator<% } %>
+	</p>
+	<% } %>
+	<% if (user.email) {%>
+		<p><%= user.email %></p>
+	<% } else { %>
+		<p>We didn't receive your email since you specified "Don't show my email address" in your Github profile.</p>
+		<p>No problem though, you can provide it to us later.</p>
+	<% } %>
+
+	<div class="events">
+		<h1>Events</h1>
+		<h2>Add</h2>
+		<form method="post" action="/api/events">
+			<label>name
+				<input type='text' name='name' placeholder='name'>
+			</label>
+			<br />
+			<label>description
+				<input type='text' name='description' placeholder='description'>
+			</label>
+			<br />
+			<label>url
+				<input type='text' name='url' placeholder='url'>
+			</label>
+			<br />
+			<input type="submit">
+		</form>
+
+		<h2>Update</h2>
+		<form method="post" action="/api/events">
+			<input type='hidden' name='verb' value='put'>
+			<label>Event _id
+				<input type='text' name='eventId' placeholder='eventId'>
+			</label>
+			<br />
+			<label>name
+				<input type='text' name='name' placeholder='name'>
+			</label>
+			<br />
+			<label>description
+				<input type='text' name='description' placeholder='description'>
+			</label>
+			<br />
+			<label>url
+				<input type='text' name='url' placeholder='url'>
+			</label>
+			<br />
+			<input type="submit">
+		</form>
+
+		<h2>Delete</h2>
+		<form method="post" action="/api/events">
+			<input type='hidden' name='verb' value='delete'>
+			<label>Event _id
+				<input type='text' name='eventId' placeholder='eventId'>
+			</label>
+			<input type="submit">
+		</form>
+	</div>
+	<div class="subscriptions">
+		<h1>Subscriptions</h1>
+		<h2>Add</h2>
+		<form method="post" action="/api/subscriptions">
+			<label>Event _id
+				<input type='text' name='eventId' placeholder='eventId'>
+			</label>
+			<br />
+			<label>Email
+				<input type='text' name='userEmail' placeholder='userEmail'>
+			</label>
+			<br />
+			<input type="submit">
+		</form>
+
+		<h2>Update</h2>
+		<form method="post" action="/api/subscriptions">
+			<input type='hidden' name='verb' value='put'>
+			<label>Subscription _id
+				<input type='text' name='subscriptionId' placeholder='subscriptionId'>
+			</label>
+			<br />
+			<label>Event _id
+				<input type='text' name='eventId' placeholder='eventId'>
+			</label>
+			<br />
+			<label>userEmail
+				<input type='text' name='userEmail' placeholder='userEmail'>
+			</label>
+			<br />
+			<input type="submit">
+		</form>
+
+		<h2>Delete</h2>
+		<form method="post" action="/api/subscriptions">
+			<input type='hidden' name='verb' value='delete'>
+			<label>Subscription _id
+				<input type='text' name='subscriptionId' placeholder='subscriptionId'>
+			</label>
+			<input type="submit">
+		</form>
+	</div>
+	<div class="signal">
+		<h1>Signal</h1>
+		<form method="post" action="/api/signals">
+			<label>Event _id
+				<input type='text' name='eventId' placeholder='eventId'>
+			</label>
+			<input type="submit">
+		</form>
+	</div>
+</body>
+</html>
