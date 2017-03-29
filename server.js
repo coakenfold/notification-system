@@ -10,6 +10,10 @@ const nodemailer = require('nodemailer');
 const _ = require('underscore');
 const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
+const SpotifyStrategy = require('passport-spotify').Strategy;
+
+const spotifyApi = require('./spotify');
+const UserSpotify = require('./models/UserSpotify')
 const session = require('express-session');
 const accountType = {
     user: 'user',
@@ -22,7 +26,7 @@ const accountType = {
 //   serialize users into and deserialize users out of the session.  Typically,
 //   this will be as simple as storing the user ID when serializing, and finding
 //   the user by ID when deserializing.  However, since this example does not
-//   have a database of user records, the complete GitHub profile is serialized
+//   have a database of user records, the complete GitHub/Spotify profile is serialized
 //   and deserialized.
 passport.serializeUser(function(user, done) {
   done(null, user);
@@ -55,6 +59,29 @@ passport.use(new GitHubStrategy({
   }
 ));
 
+// Use the SpotifyStrategy within Passport.
+//   Strategies in Passport require a `verify` function, which accept
+//   credentials (in this case, an accessToken, refreshToken, and spotify
+//   profile), and invoke a callback with a user object.
+passport.use(new SpotifyStrategy({
+  clientID : config.spotify.clientId,
+  clientSecret : config.spotify.clientSecret,
+  callbackURL : config.spotify.redirectUri
+  },
+  function(accessToken, refreshToken, profile, done) {
+
+      return done(null, profile);
+
+    // To keep the example simple, the user's spotify profile is returned to
+    // represent the logged-in user. In a typical application, you would want
+    // to associate the spotify account with a user record in your database,
+    // and return that user instead.
+    // User.findOrCreate({ spotifyId: profile.id }, function (err, user) {
+    //   return done(err, user);
+    // });
+    //console.log(profile);
+  }
+  ));
 
 
 mongoose.connect(config.mongoURL);
@@ -413,9 +440,61 @@ app.get('/logout', function(req, res){
   res.redirect('/');
 });
 
+
+// GET /auth/spotify
+//   Use passport.authenticate() as route middleware to authenticate the
+//   request. The first step in spotify authentication will involve redirecting
+//   the user to spotify.com. After authorization, spotify will redirect the user
+//   back to this application at /auth/spotify/callback
+app.get('/auth/spotify',
+  passport.authenticate('spotify', {scope: ['user-read-email', 'user-read-private'], showDialog: true}),
+  function(req, res){
+// The request will be redirected to spotify for authentication, so this
+// function will not be called.
+});
+
+// GET /auth/spotify/callback
+//   Use passport.authenticate() as route middleware to authenticate the
+//   request. If authentication fails, the user will be redirected back to the
+//   login page. Otherwise, the primary route function function will be called,
+//   which, in this example, will redirect the user to the home page.
+app.get('/spotify/playlist/auth-response',
+  passport.authenticate('spotify', { failureRedirect: '/login' }),
+  function(req, res) {
+
+  //  req.session.userSpotify = userObj;
+    console.log('SPOTIFY req.user', req.user);
+    res.redirect('/spotify/playlist');
+
+    // UserSpotify.find({id: profile.id}, function(err, userSpotify) {
+    //   if (err) {
+    //     // res.render('events', {
+    //     //   "events": [],
+    //     //   "error": err
+    //     // });
+    // console.log('error: UserSpotify');
+    //   }
+    //   console.log('Authenticated Spotify');
+    //   res.render('spotify', { "userSpotify": userSpotify});
+    // })
+
+    // Get Elvis' albums
+//   spotifyApi.getArtistAlbums('43ZHCT0cAZBISjO8DG9PnE')
+//   .then(function(data) {
+//     console.log('Artist albums', data.body);
+//   }, function(err) {
+//     console.error(err);
+//   });
+
+  });
+
+app.get('/spotify/playlist', ensureAuthenticated, function(req, res, next) {
+    res.render('spotify', { "req":req});
+});
+
 app.listen(port, function(){
 	console.log('listening on port ' + port);
-})
+});
 
 
 // Simple route middleware to ensure user is authenticated.
