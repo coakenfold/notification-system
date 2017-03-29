@@ -9,6 +9,7 @@ const Subscription = require('./models/subscription');
 const nodemailer = require('nodemailer');
 const _ = require('underscore');
 const passport = require('passport');
+const GitHubApi = require("github");
 const GitHubStrategy = require('passport-github2').Strategy;
 const SpotifyStrategy = require('passport-spotify').Strategy;
 
@@ -20,6 +21,16 @@ const accountType = {
     creator: 'creator',
     admin: 'admin'
   }
+  const github = new GitHubApi({
+      // optional
+      debug: true,
+      protocol: "https",
+      host: "api.github.com", // should be api.github.com for GitHub
+      headers: {
+          "user-agent": "@coakenfold-Notification-System" // GitHub is happy with a unique user agent
+      },
+      timeout: 5000
+  })
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
@@ -120,6 +131,7 @@ app.get('/home', ensureAuthenticated, function(req, res) {
     });
 });
 
+
 app.get('/events', ensureAuthenticated, function(req, res) {
 	Event.find(function (err, events) {
 		if (err) {
@@ -142,6 +154,14 @@ app.get('/events/:id', ensureAuthenticated, function(req, res, next) {
 		}
 		res.render('events', { "events": eve});
 	})
+});
+
+app.get('/api/github', function(req, res, next){
+     github.users.getFollowingForUser({
+         username: req.session.user.userName
+     }, function(err, response) {
+        res.json(response);
+     });
 });
 
 app.get('/api/events', function(req,res, next) {
@@ -373,7 +393,7 @@ app.get('/', function(req, res) {
 //   the user to github.com.  After authorization, GitHub will redirect the user
 //   back to this application at /auth/github/callback
 app.get('/auth/github',
-  passport.authenticate('github', { scope: [ 'user:email' ] }),
+  passport.authenticate('github', { scope: [ 'user:email' ,'public_repo'] }),
   function(req, res){
     // The request will be redirected to GitHub for authentication, so this
     // function will not be called.
@@ -431,7 +451,7 @@ app.get('/auth/github/callback',
     }
 
     req.session.user = userObj;
-    console.log('req.session.user', req.session.user);
+    //console.log('req.session.user', req.session.user);
     res.redirect('/home');
   });
 
